@@ -18,6 +18,8 @@ class JobboleSpider(RedisSpider):
     allowed_domains = ["blog.jobbole.com"]
     redis_key = 'jobbole:start_urls'
 
+    # start_urls=["http://blog.jobbole.com/all-posts/"]
+
     # 收集伯乐在线所有404的url以及404页面数
     handle_httpstatus_list = [404]
 
