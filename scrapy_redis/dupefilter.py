@@ -7,6 +7,8 @@ from scrapy.utils.request import request_fingerprint
 from . import defaults
 from .connection import get_redis_from_settings
 
+from ScrapyRedisTest.utils.bloomfilter import conn, PyBloomFilter
+
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +40,9 @@ class RFPDupeFilter(BaseDupeFilter):
         self.key = key
         self.debug = debug
         self.logdupes = True
+
+        # initial bloomfilter
+        self.bf = PyBloomFilter(conn=conn, key=key)
 
     @classmethod
     def from_settings(cls, settings):
@@ -96,9 +101,17 @@ class RFPDupeFilter(BaseDupeFilter):
 
         """
         fp = self.request_fingerprint(request)
+
+        # add bloom filter  -- bf will manage visitl url collection
+        if self.bf.is_exist(fp):
+            return True
+        else:
+            self.bf.add(fp)
+            return False
+
         # This returns the number of values added, zero if already exists.
-        added = self.server.sadd(self.key, fp)
-        return added == 0
+        # added = self.server.sadd(self.key, fp)
+        # return added == 0
 
     def request_fingerprint(self, request):
         """Returns a fingerprint for a given request.
